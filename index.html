@@ -65,7 +65,11 @@ const euro=n=>new Intl.NumberFormat('nl-NL',{style:'currency',currency:'EUR'}).f
 function bereken(){
 let i=+inkoop.value||0,v=+verkoop.value||0,s=+verzend.value||0;
 let k=v*(+kosten.value||0)/100,r=+risico.value||0;
+
 let w=v-i-s-k-r;
+let max=v-s-k-r-15;
+document.getElementById('maxInkoop').textContent= euro(max);
+
 winst.textContent=euro(w);
 winst.style.color=w>=15?'#49d49d':'#ff8b8b';
 return w;
