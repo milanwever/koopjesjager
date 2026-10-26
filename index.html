@@ -1,0 +1,99 @@
+
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101827">
+<title>Koopjesjager</title>
+<style>
+body{margin:0;background:#0b1220;color:#fff;font:16px Arial,sans-serif;padding:18px}
+h1{color:#80b9ff}
+.card{background:#172438;padding:16px;border-radius:15px;margin:14px 0}
+label{display:block;color:#b9c7da;margin-top:12px}
+input,select,button{box-sizing:border-box;width:100%;padding:12px;margin-top:6px;border-radius:9px;border:1px solid #40516a;background:#0b1220;color:white;font-size:16px}
+button{background:#3185e8;border:0;font-weight:bold;margin-top:16px}
+.result{font-size:22px;font-weight:bold;color:#49d49d}
+.deal{border-top:1px solid #40516a;padding:12px 0;overflow-wrap:anywhere}
+small{color:#b9c7da}
+</style>
+</head>
+<body>
+<h1>🎯 Koopjesjager</h1>
+<p>Vind tweedehands koopjes en bereken je mogelijke winst.</p>
+
+<div class="card">
+<h2>Deal berekenen</h2>
+<label>Product</label>
+<input id="naam" placeholder="Bijv. Pokémonkaart of PS5">
+<label>Categorie</label>
+<select id="cat">
+<option>Pokémonkaarten</option>
+<option>Consoles en games</option>
+<option>Elektronica</option>
+</select>
+<label>Advertentielink</label>
+<input id="link" placeholder="https://...">
+<label>Inkoopprijs (€)</label>
+<input id="inkoop" type="number" value="20" min="0" step=".01">
+<label>Verwachte verkoopprijs (€)</label>
+<input id="verkoop" type="number" value="50" min="0" step=".01">
+<label>Verzendkosten inkoop (€)</label>
+<input id="verzend" type="number" value="0" min="0" step=".01">
+<label>Verkoopkosten (%)</label>
+<input id="kosten" type="number" value="10" min="0" max="100" step=".1">
+<label>Risicoreserve (€)</label>
+<input id="risico" type="number" value="3" min="0" step=".01">
+<p>Geschatte winst:</p>
+<div class="result" id="winst">€ 22,00</div>
+<p><small>Je doel is minimaal € 15 winst per deal.</small></p>
+<button onclick="bewaar()">Deal bewaren</button>
+</div>
+
+<div class="card">
+<h2>⭐ Mijn deals</h2>
+<div id="lijst">Nog geen deals opgeslagen.</div>
+<button onclick="exporteer()">Deals exporteren</button>
+</div>
+
+<script>
+const euro=n=>new Intl.NumberFormat('nl-NL',{style:'currency',currency:'EUR'}).format(n);
+function bereken(){
+let i=+inkoop.value||0,v=+verkoop.value||0,s=+verzend.value||0;
+let k=v*(+kosten.value||0)/100,r=+risico.value||0;
+let w=v-i-s-k-r;
+winst.textContent=euro(w);
+winst.style.color=w>=15?'#49d49d':'#ff8b8b';
+return w;
+}
+['inkoop','verkoop','verzend','kosten','risico'].forEach(id=>document.getElementById(id).addEventListener('input',bereken));
+function haal(){try{return JSON.parse(localStorage.getItem('koopjes')||'[]')}catch(e){return []}}
+function toon(){
+let d=haal(),l=document.getElementById('lijst');
+if(!d.length){l.textContent='Nog geen deals opgeslagen.';return}
+l.innerHTML='';
+d.forEach((x,n)=>{
+let div=document.createElement('div');div.className='deal';
+let t=document.createElement('b');t.textContent=x.naam+' — '+euro(x.winst);div.appendChild(t);
+let p=document.createElement('p');p.textContent=x.cat+' · Inkoop '+euro(x.inkoop)+' · '+x.status;div.appendChild(p);
+if(x.link){let a=document.createElement('a');a.href=x.link;a.target='_blank';a.rel='noopener';a.textContent='Open advertentie';a.style.color='#80b9ff';div.appendChild(a)}
+let b=document.createElement('button');b.textContent='Verwijderen';b.onclick=()=>{let z=haal();z.splice(n,1);localStorage.setItem('koopjes',JSON.stringify(z));toon()};div.appendChild(b);l.appendChild(div);
+});
+}
+function bewaar(){
+let naam=document.getElementById('naam').value.trim();
+if(!naam){alert('Vul eerst een productnaam in.');return}
+let link=document.getElementById('link').value.trim();
+if(link&&!/^https?:\/\//i.test(link)){alert('De link moet beginnen met https:// of http://');return}
+let w=bereken(),d=haal();
+d.unshift({naam,cat:cat.value,link,inkoop:+inkoop.value||0,verkoop:+verkoop.value||0,winst:w,status:w>=15?'Interessant':'Onder winstdoel'});
+localStorage.setItem('koopjes',JSON.stringify(d));toon();alert(w>=15?'Deal opgeslagen! Boven je winstdoel.':'Deal opgeslagen, maar onder je winstdoel.');
+}
+function exporteer(){
+let blob=new Blob([JSON.stringify(haal(),null,2)],{type:'application/json'});
+let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mijn-koopjes.json';a.click();URL.revokeObjectURL(a.href);
+}
+bereken();toon();
+</script>
+</body>
+</html>
